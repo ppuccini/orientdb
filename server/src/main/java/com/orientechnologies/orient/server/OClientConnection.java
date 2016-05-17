@@ -53,6 +53,7 @@ public class OClientConnection {
   private Boolean                           tokenBased;
   private byte[]                            tokenBytes;
   private OToken                            token;
+  private boolean                           stateless;
 
   public OClientConnection(final int id, final ONetworkProtocol protocol) throws IOException {
     this.id = id;
@@ -200,7 +201,6 @@ public class OClientConnection {
     data.commandDetail = "-";
 
     release();
-
   }
 
   public void init(OServer server) {
@@ -296,5 +296,13 @@ public class OClientConnection {
     data.commandInfo = "Listening";
     data.commandDetail = "-";
     stats.lastCommandReceived = System.currentTimeMillis();
+  }
+
+  public boolean isStateless() {
+    return stateless;
+  }
+
+  public void setStateless(boolean stateless) {
+    this.stateless = stateless;
   }
 }

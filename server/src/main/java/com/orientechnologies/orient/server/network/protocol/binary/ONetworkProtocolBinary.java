@@ -262,6 +262,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         if (connection == null && bytes != null && bytes.length > 0) {
           // THIS IS THE CASE OF A TOKEN OPERATION WITHOUT HANDSHAKE ON THIS CONNECTION.
           connection = server.getClientConnectionManager().connect(this);
+          connection.setStateless(true);
         }
 
         if (connection == null) {
@@ -304,6 +305,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     if (connection != null) {
       connection.endOperation();
+      if (connection.isStateless())
+        server.getClientConnectionManager().disconnect(server, connection);
     }
     setDataCommandInfo(connection, "Listening");
   }
