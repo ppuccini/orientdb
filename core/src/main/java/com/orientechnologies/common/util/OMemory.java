@@ -47,22 +47,7 @@ public class OMemory {
    * @return the total physical memory size in bytes or {@code -1} if the size can't be obtained.
    */
   public static long getPhysicalMemorySize() {
-    long osMemory = -1;
-
-    final OperatingSystemMXBean mxBean = ManagementFactory.getOperatingSystemMXBean();
-    try {
-      final Method memorySize = mxBean.getClass().getDeclaredMethod("getTotalPhysicalMemorySize");
-      memorySize.setAccessible(true);
-      osMemory = (Long) memorySize.invoke(mxBean);
-    } catch (NoSuchMethodException e) {
-      OLogManager.instance().error(OMemory.class, "Unable to determine the amount of installed RAM.", e);
-    } catch (InvocationTargetException e) {
-      OLogManager.instance().error(OMemory.class, "Unable to determine the amount of installed RAM.", e);
-    } catch (IllegalAccessException e) {
-      OLogManager.instance().error(OMemory.class, "Unable to determine the amount of installed RAM.", e);
-    }
-
-    return osMemory;
+    return -1;
   }
 
   /**
