@@ -91,40 +91,7 @@ public abstract class OSharedResourceTimeout {
   }
 
   private String extractLockOwnerStackTrace(Lock lock) {
-    try {
-      Field syncField = lock.getClass().getDeclaredField("sync");
-      syncField.setAccessible(true);
-
-      Object sync = syncField.get(lock);
-      Method getOwner = sync.getClass().getSuperclass().getDeclaredMethod("getOwner");
-      getOwner.setAccessible(true);
-
-      final Thread owner = (Thread) getOwner.invoke(sync);
-      if (owner == null)
-        return null;
-
-      StringWriter stringWriter = new StringWriter();
-      PrintWriter printWriter = new PrintWriter(stringWriter);
-
-      printWriter.append("Owner thread : ").append(owner.toString()).append("\n");
-
-      StackTraceElement[] stackTrace = owner.getStackTrace();
-      for (StackTraceElement traceElement : stackTrace)
-        printWriter.println("\tat " + traceElement);
-
-      printWriter.flush();
-      return stringWriter.toString();
-    } catch (RuntimeException e) {
-      return null;
-    } catch (NoSuchFieldException e) {
-      return null;
-    } catch (IllegalAccessException e) {
-      return null;
-    } catch (NoSuchMethodException e) {
-      return null;
-    } catch (InvocationTargetException e) {
-      return null;
-    }
+    return null;
   }
 
 }

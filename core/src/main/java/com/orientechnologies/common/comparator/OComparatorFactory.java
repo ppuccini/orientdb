@@ -32,21 +32,6 @@ import java.util.Comparator;
 public class OComparatorFactory {
   public static final OComparatorFactory INSTANCE = new OComparatorFactory();
 
-  private static final boolean           unsafeWasDetected;
-
-  static {
-    boolean unsafeDetected = false;
-
-    try {
-      Class<?> sunClass = Class.forName("sun.misc.Unsafe");
-      unsafeDetected = sunClass != null;
-    } catch (ClassNotFoundException cnfe) {
-      // Ignore
-    }
-
-    unsafeWasDetected = unsafeDetected;
-  }
-
   /**
    * Returns {@link Comparator} instance if applicable one exist or <code>null</code> otherwise.
    * 

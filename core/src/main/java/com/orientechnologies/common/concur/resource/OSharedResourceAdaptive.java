@@ -36,16 +36,15 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * Adaptive class to handle shared resources. It's configurable specifying if it's running in a concurrent environment and allow o
  * specify a maximum timeout to avoid deadlocks.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
 public class OSharedResourceAdaptive {
   private final ReentrantReadWriteLock lock  = new ReentrantReadWriteLock();
   private final AtomicInteger          users = new AtomicInteger(0);
-  private final boolean                concurrent;
-  private final int                    timeout;
-  private final boolean                ignoreThreadInterruption;
+  private final boolean concurrent;
+  private final int     timeout;
+  private final boolean ignoreThreadInterruption;
 
   protected OSharedResourceAdaptive() {
     this.concurrent = true;
@@ -90,12 +89,16 @@ public class OSharedResourceAdaptive {
     return concurrent;
   }
 
-  /** To use in assert block. */
+  /**
+   * To use in assert block.
+   */
   public boolean assertExclusiveLockHold() {
     return lock.getWriteHoldCount() > 0;
   }
 
-  /** To use in assert block. */
+  /**
+   * To use in assert block.
+   */
   public boolean assertSharedLockHold() {
     return lock.getReadHoldCount() > 0;
   }
@@ -122,8 +125,8 @@ public class OSharedResourceAdaptive {
             }
           }
 
-          final OLockException exception = new OLockException("Thread interrupted while waiting for resource of class '"
-              + getClass() + "' with timeout=" + timeout);
+          final OLockException exception = new OLockException(
+              "Thread interrupted while waiting for resource of class '" + getClass() + "' with timeout=" + timeout);
           throw OException.wrapException(exception, e);
 
         }
@@ -158,8 +161,8 @@ public class OSharedResourceAdaptive {
             }
           }
 
-          final OLockException exception = new OLockException("Thread interrupted while waiting for resource of class '"
-              + getClass() + "' with timeout=" + timeout);
+          final OLockException exception = new OLockException(
+              "Thread interrupted while waiting for resource of class '" + getClass() + "' with timeout=" + timeout);
           throw OException.wrapException(exception, e);
         }
 
@@ -186,45 +189,12 @@ public class OSharedResourceAdaptive {
   private void throwTimeoutException(Lock lock) {
     final String owner = extractLockOwnerStackTrace(lock);
 
-    throw new OTimeoutException("Timeout on acquiring exclusive lock against resource of class: " + getClass() + " with timeout="
-        + timeout + (owner != null ? "\n" + owner : ""));
+    throw new OTimeoutException(
+        "Timeout on acquiring exclusive lock against resource of class: " + getClass() + " with timeout=" + timeout + (
+            owner != null ? "\n" + owner : ""));
   }
 
   private String extractLockOwnerStackTrace(Lock lock) {
-    try {
-      Field syncField = lock.getClass().getDeclaredField("sync");
-      syncField.setAccessible(true);
-
-      Object sync = syncField.get(lock);
-      Method getOwner = sync.getClass().getSuperclass().getDeclaredMethod("getOwner");
-      getOwner.setAccessible(true);
-
-      final Thread owner = (Thread) getOwner.invoke(sync);
-      if (owner == null)
-        return null;
-
-      StringWriter stringWriter = new StringWriter();
-      PrintWriter printWriter = new PrintWriter(stringWriter);
-
-      printWriter.append("Owner thread : ").append(owner.toString()).append("\n");
-
-      StackTraceElement[] stackTrace = owner.getStackTrace();
-      for (StackTraceElement traceElement : stackTrace)
-        printWriter.println("\tat " + traceElement);
-
-      printWriter.flush();
-      return stringWriter.toString();
-    } catch (RuntimeException e) {
-      return null;
-    } catch (NoSuchFieldException e) {
-      return null;
-    } catch (IllegalAccessException e) {
-      return null;
-    } catch (NoSuchMethodException e) {
-      return null;
-    } catch (InvocationTargetException e) {
-      return null;
-    }
-
+    return null;
   }
 }
