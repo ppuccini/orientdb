@@ -173,12 +173,6 @@
                         <exclude>${exclude.test.7}</exclude>
                         <exclude>${exclude.test.8}</exclude>
                     </excludes>
-                    <properties>
-                        <property>
-                            <name>surefire.testng.verbose</name>
-                            <value>10</value>
-                        </property>
-                    </properties>
                 </configuration>
             </plugin>
             <plugin>
