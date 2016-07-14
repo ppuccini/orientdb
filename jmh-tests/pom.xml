@@ -28,16 +28,16 @@ questions.
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <artifactId>orientdb-parent</artifactId>
         <groupId>com.orientechnologies</groupId>
-        <version>3.0.0-SNAPSHOT</version>
-        <relativePath>../pom.xml</relativePath>
+        <artifactId>orientdb-parent</artifactId>
+        <version>2.2.5-SNAPSHOT</version>
+        <relativePath/>
     </parent>
 
-    <artifactId>orientdb-jmh-tests</artifactId>
+    <artifactId>orientdb-jmh-test</artifactId>
     <packaging>jar</packaging>
 
-    <name>OrientDB JMH benchmarks</name>
+    <name>Auto-generated JMH benchmark</name>
 
     <prerequisites>
         <maven>3.0</maven>
@@ -45,10 +45,18 @@ questions.
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <jmh.version>0.9.3</jmh.version>
+        <jmh.version>1.12</jmh.version>
+        <javac.target>1.8</javac.target>
+        <uberjar.name>benchmarks</uberjar.name>
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-core</artifactId>
+            <version>3.0.0-SNAPSHOT</version>
+        </dependency>
+
         <dependency>
             <groupId>org.openjdk.jmh</groupId>
             <artifactId>jmh-core</artifactId>
@@ -60,13 +68,7 @@ questions.
             <version>${jmh.version}</version>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>com.orientechnologies</groupId>
-            <artifactId>orientdb-core</artifactId>
-            <version>${project.version}</version>
-        </dependency>
     </dependencies>
-
 
     <build>
         <plugins>
@@ -75,9 +77,9 @@ questions.
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.1</version>
                 <configuration>
-                    <compilerVersion>1.8</compilerVersion>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <compilerVersion>${javac.target}</compilerVersion>
+                    <source>${javac.target}</source>
+                    <target>${javac.target}</target>
                 </configuration>
             </plugin>
             <plugin>
@@ -91,13 +93,26 @@ questions.
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <finalName>benchmarks</finalName>
+                            <finalName>${uberjar.name}</finalName>
                             <transformers>
-                                <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>org.openjdk.jmh.Main</mainClass>
                                 </transformer>
                             </transformers>
+                            <filters>
+                                <filter>
+                                    <!--
+                                        Shading signed JARs will fail without this.
+                                        http://stackoverflow.com/questions/999489/invalid-signature-file-when-attempting-to-run-a-jar
+                                    -->
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
                         </configuration>
                     </execution>
                 </executions>
@@ -139,7 +154,7 @@ questions.
                 </plugin>
                 <plugin>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>${surefire.version}</version>
+                    <version>2.17</version>
                 </plugin>
             </plugins>
         </pluginManagement>
