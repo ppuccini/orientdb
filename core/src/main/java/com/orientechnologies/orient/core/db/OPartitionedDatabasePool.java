@@ -91,6 +91,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract implements
   private volatile boolean closed     = false;
   private          boolean autoCreate = false;
 
+
   public OPartitionedDatabasePool(String url, String userName, String password) {
     this(url, userName, password, 64, -1);
   }
@@ -409,7 +410,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract implements
     private PoolPartition partition;
 
     private DatabaseDocumentTxPooled(String iURL) {
-      super(iURL, true, false);
+      super(iURL);
     }
 
     @Override
