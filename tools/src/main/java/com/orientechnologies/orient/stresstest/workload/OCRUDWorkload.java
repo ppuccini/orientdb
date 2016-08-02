@@ -25,6 +25,7 @@ import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxOrig;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.tool.ODatabaseRepair;
 import com.orientechnologies.orient.core.db.tool.ODatabaseTool;
@@ -237,7 +238,7 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
   }
 
   public ODocument createOperation(final long n) {
-    return (ODocument) ODatabaseDocumentTx.executeWithRetries(new OCallable<Object, Integer>() {
+    return (ODocument) ODatabaseDocumentTxOrig.executeWithRetries(new OCallable<Object, Integer>() {
       @Override
       public Object call(Integer iArgument) {
         ODocument doc = new ODocument(CLASS_NAME);
@@ -265,7 +266,7 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
   }
 
   public void updateOperation(final ODatabase database, final OIdentifiable rec) {
-    ODatabaseDocumentTx.executeWithRetries(new OCallable<Object, Integer>() {
+    ODatabaseDocumentTxOrig.executeWithRetries(new OCallable<Object, Integer>() {
       @Override
       public Object call(Integer iArgument) {
         final ODocument doc = rec.getRecord();
@@ -277,7 +278,7 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
   }
 
   public void deleteOperation(final ODatabase database, final OIdentifiable rec) {
-    ODatabaseDocumentTx.executeWithRetries(new OCallable<Object, Integer>() {
+    ODatabaseDocumentTxOrig.executeWithRetries(new OCallable<Object, Integer>() {
       @Override
       public Object call(Integer iArgument) {
         database.delete(rec.getIdentity());

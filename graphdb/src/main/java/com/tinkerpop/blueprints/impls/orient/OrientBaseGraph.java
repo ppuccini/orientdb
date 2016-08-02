@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -1164,7 +1165,10 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * Returns the underlying Database instance as ODatabaseDocumentTx instance.
    */
   public ODatabaseDocumentTx getRawGraph() {
-    return (ODatabaseDocumentTx) getDatabase();
+    if (getDatabase() instanceof ODatabaseDocumentTx)
+      return (ODatabaseDocumentTx) getDatabase();
+    else
+      return ODatabaseDocumentTxInternal.wrap(getDatabase());
   }
 
   /**
@@ -1898,14 +1902,15 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       final String connMode = settings.getConnectionStrategy();
       getDatabase().setProperty(OStorageRemote.PARAM_CONNECTION_STRATEGY, connMode);
 
-      if (getDatabase().getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
-        ((OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying()).registerRecoverListener(this);
-
       if (url.startsWith("remote:") || getDatabase().exists()) {
         if (getDatabase().isClosed())
           getDatabase().open(username, password);
       } else
         getDatabase().create();
+
+      if (getDatabase().getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
+        ((OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying()).registerRecoverListener(this);
+
     } else {
       database = pool.acquire();
 
@@ -1940,7 +1945,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (database == null) {
       throw new ODatabaseException("Database is closed");
     }
-    return (ODatabaseDocumentTx) database;
+    return (ODatabaseDocumentInternal) database;
   }
 
   private static class InitializationStackThreadLocal extends ThreadLocal<Deque<OrientBaseGraph>> {
