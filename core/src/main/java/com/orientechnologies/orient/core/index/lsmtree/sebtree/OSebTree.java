@@ -384,8 +384,8 @@ public class OSebTree<K, V> extends ODurableComponent implements OTree<K, V> {
 
   private OSebTreeNode<K, V> createNode(OAtomicOperation atomicOperation) throws IOException {
     final OCacheEntry page = addPage(atomicOperation, fileId);
-    //    if (inMemory)
-    //      pinPage(atomicOperation, page);
+    if (inMemory && !full)
+      pinPage(atomicOperation, page);
     return new OSebTreeNode<>(page, keyProvider, valueProvider);
   }
 
@@ -729,7 +729,7 @@ public class OSebTree<K, V> extends ODurableComponent implements OTree<K, V> {
     //      final int preload = (int) (BLOCK_SIZE - (pageIndex - 1 - (nullKeyAllowed ? 1 : 0)) % BLOCK_SIZE);
     //      page = loadPage(atomicOperation, fileId, pageIndex, false, preload);
     //    } else
-    page = loadPage(atomicOperation, fileId, pageIndex, false /*inMemory*/);
+    page = loadPage(atomicOperation, fileId, pageIndex, inMemory);
 
     return new OSebTreeNode<>(page, keyProvider, valueProvider);
   }
@@ -1443,8 +1443,7 @@ public class OSebTree<K, V> extends ODurableComponent implements OTree<K, V> {
 
     if (!full && firstPage >= IN_MEMORY_PAGES_THRESHOLD) {
       full = true;
-      //      inMemory = false;
-      //      unpinAllPages(atomicOperation, fileId);
+      unpinAllPages(atomicOperation, fileId);
     }
 
     for (int i = 0; i < BLOCK_SIZE - 1; ++i)
