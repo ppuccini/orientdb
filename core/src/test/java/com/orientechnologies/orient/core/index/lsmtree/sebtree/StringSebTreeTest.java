@@ -152,7 +152,7 @@ public class StringSebTreeTest {
     final Random random = new Random(seed);
     System.out.println("StringSebTreeTest.testLargeDensePutRemove seed: " + seed);
 
-    final int count = RANDOMIZED_TESTS_ITERATIONS / 2; //(int) Math.sqrt(RANDOMIZED_TESTS_ITERATIONS);
+    final int count = (int) Math.sqrt(RANDOMIZED_TESTS_ITERATIONS);
     final Map<String, String> expected = new TreeMap<>();
 
     try {
