@@ -61,6 +61,7 @@ public class SebTreeLsmLikeBenchmarks {
   @Benchmark
   @BenchmarkMode(Mode.Throughput)
   public void randomInsert() {
+    ++keyIndex;
     getTree().put(randomString(64), randomString(128));
   }
 
@@ -73,6 +74,7 @@ public class SebTreeLsmLikeBenchmarks {
   private OSebTree<String, String> getTree() {
     if (tree == null || tree.isFull()) {
       System.out.println("\n" + ++fileIndex + " seb tree created");
+      System.out.println(keyIndex + " keys inserted");
       tree = new OSebTree<>((OAbstractPaginatedStorage) db.getStorage(), "seb-tree" + fileIndex, ".seb", true);
       tree.create(OStringSerializer.INSTANCE, null, 1, false, OStringSerializer.INSTANCE);
     }
