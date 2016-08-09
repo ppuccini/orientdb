@@ -20,6 +20,7 @@
 package com.orientechnologies.jmh.trees;
 
 import com.orientechnologies.common.serialization.types.OStringSerializer;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.lsmtree.sebtree.OSebTree;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -29,6 +30,10 @@ import java.util.Random;
 
 @State(Scope.Thread)
 public class SebTreeLsmLikeBenchmarks {
+
+  static {
+    OGlobalConfiguration.DISK_CACHE_SIZE.setValue(1024);
+  }
 
   private ODatabaseDocumentTx db;
   private OSebTree<String, String> tree = null;
