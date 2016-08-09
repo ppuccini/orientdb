@@ -31,10 +31,6 @@ import java.util.Random;
 @State(Scope.Thread)
 public class SebTreeLsmLikeBenchmarks {
 
-  static {
-    OGlobalConfiguration.DISK_CACHE_SIZE.setValue(1024);
-  }
-
   private ODatabaseDocumentTx db;
   private OSebTree<String, String> tree = null;
   private Random random;

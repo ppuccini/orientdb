@@ -31,10 +31,6 @@ import java.util.Random;
 @State(Scope.Thread)
 public class SbTreeBenchmarks {
 
-  static {
-    OGlobalConfiguration.DISK_CACHE_SIZE.setValue(1024);
-  }
-
   private ODatabaseDocumentTx     db;
   private OSBTree<String, String> tree;
   private Random                  random;

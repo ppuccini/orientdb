@@ -77,6 +77,11 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
   }
 
   private void configureDefaultDiskCacheSize() {
+    if (true) {
+      OGlobalConfiguration.DISK_CACHE_SIZE.setValue(1024);
+      return;
+    }
+
     final long osMemory = OMemory.getPhysicalMemorySize();
     final long jvmMaxMemory = OMemory.getCappedRuntimeMaxMemory(2L * 1024 * 1024 * 1024 /* 2GB */);
     final long maxDirectMemory = OMemory.getConfiguredMaxDirectMemory();
