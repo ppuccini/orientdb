@@ -34,7 +34,8 @@ public class SbTreeBenchmarks {
   private OSBTree<String, String> tree;
   private Random                  random;
 
-  private long keyIndex;
+  private long keyIndex = 0;
+  private long inserted = 0;
 
   @Setup
   public void setup() {
@@ -54,7 +55,6 @@ public class SbTreeBenchmarks {
     tree.create(OStringSerializer.INSTANCE, OStringSerializer.INSTANCE, null, 1, false);
 
     random = new Random(57);
-    keyIndex = 0;
   }
 
   @TearDown
@@ -76,6 +76,9 @@ public class SbTreeBenchmarks {
   @Benchmark
   @BenchmarkMode(Mode.Throughput)
   public void randomInsert() {
+    if (++inserted % 100000 == 0)
+      System.out.println("\nInserted: " + inserted);
+
     tree.put(randomString(64), randomString(128));
   }
 

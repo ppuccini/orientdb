@@ -49,7 +49,7 @@ public class StringSebTreeTest {
     if (buildDirectory == null)
       buildDirectory = ".";
 
-    db = new ODatabaseDocumentTx("memory:" + buildDirectory + "/StringSebTreeTest");
+    db = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/StringSebTreeTest");
     System.out.println(db.getURL());
     if (db.exists()) {
       db.open("admin", "admin");
@@ -58,7 +58,7 @@ public class StringSebTreeTest {
 
     db.create();
 
-    tree = new OSebTree<>((OAbstractPaginatedStorage) db.getStorage(), "tree", ".seb");
+    tree = new OSebTree<>((OAbstractPaginatedStorage) db.getStorage(), "tree", ".seb", true);
     tree.create(OStringSerializer.INSTANCE, null, 1, false, OStringSerializer.INSTANCE);
   }
 
@@ -152,7 +152,7 @@ public class StringSebTreeTest {
     final Random random = new Random(seed);
     System.out.println("StringSebTreeTest.testLargeDensePutRemove seed: " + seed);
 
-    final int count = (int) Math.sqrt(RANDOMIZED_TESTS_ITERATIONS);
+    final int count = RANDOMIZED_TESTS_ITERATIONS / 2; //(int) Math.sqrt(RANDOMIZED_TESTS_ITERATIONS);
     final Map<String, String> expected = new TreeMap<>();
 
     try {

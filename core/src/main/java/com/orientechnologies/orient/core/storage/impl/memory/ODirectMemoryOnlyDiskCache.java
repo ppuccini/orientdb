@@ -234,6 +234,11 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
+  public void unpinAllPages(long fileId) {
+    // do nothing
+  }
+
+  @Override
   public OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache) {
     final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = performanceStatisticManager
         .getSessionPerformanceStatistic();

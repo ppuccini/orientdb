@@ -28,13 +28,14 @@ import org.openjdk.jmh.annotations.*;
 import java.util.Random;
 
 @State(Scope.Thread)
-public class SebTreeBenchmarks {
+public class SebTreeLsmLikeBenchmarks {
 
-  private ODatabaseDocumentTx      db;
-  private OSebTree<String, String> tree;
-  private Random                   random;
+  private ODatabaseDocumentTx db;
+  private OSebTree<String, String> tree = null;
+  private Random random;
 
-  private long keyIndex;
+  private long keyIndex  = 0;
+  private long fileIndex = 0;
 
   @Setup
   public void setup() {
@@ -42,47 +43,41 @@ public class SebTreeBenchmarks {
     if (buildDirectory == null)
       buildDirectory = "./jmh-tests/target";
 
-    db = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/SebTreeBenchmarks");
+    db = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/SebTreeLsmLikeBenchmarks");
     if (db.exists()) {
       db.open("admin", "admin");
       db.drop();
     }
 
     db.create();
-
-    tree = new OSebTree<>((OAbstractPaginatedStorage) db.getStorage(), "seb-tree", ".seb", false);
-    tree.create(OStringSerializer.INSTANCE, null, 1, false, OStringSerializer.INSTANCE);
-
     random = new Random(57);
-    keyIndex = 0;
   }
 
   @TearDown
   public void tearDown() {
-    tree.delete();
     db.drop();
   }
 
   @Benchmark
   @BenchmarkMode(Mode.Throughput)
-  public void basicThings() {
-    tree.put("key", "value");
-    tree.contains("key");
-    tree.put("key", "new value");
-    tree.put("key2", "value2");
-    tree.remove("key");
-  }
-
-  @Benchmark
-  @BenchmarkMode(Mode.Throughput)
   public void randomInsert() {
-    tree.put(randomString(64), randomString(128));
+    getTree().put(randomString(64), randomString(128));
   }
 
   @Benchmark
   @BenchmarkMode(Mode.Throughput)
   public void sequentialInsert() {
-    tree.put(nextString(keyIndex++), randomString(128));
+    getTree().put(nextString(keyIndex++), randomString(128));
+  }
+
+  private OSebTree<String, String> getTree() {
+    if (tree == null || tree.isFull()) {
+      System.out.println("\n" + ++fileIndex + " seb tree created");
+      tree = new OSebTree<>((OAbstractPaginatedStorage) db.getStorage(), "seb-tree" + fileIndex, ".seb", true);
+      tree.create(OStringSerializer.INSTANCE, null, 1, false, OStringSerializer.INSTANCE);
+    }
+
+    return tree;
   }
 
   private String randomString(int maxLength) {

@@ -169,6 +169,16 @@ public class OAtomicOperation {
     pageChangesContainer.pinPage = true;
   }
 
+  public void unpinAllPages(long fileId) {
+    if (deletedFiles.contains(fileId))
+      throw new OStorageException("File with id " + fileId + " is deleted.");
+
+    final FileChanges fileChanges = this.fileChanges.get(fileId);
+    fileChanges.unpinAllPages = true;
+    for (OCacheEntryChanges cacheEntryChanges : fileChanges.pageChangesMap.values())
+      cacheEntryChanges.pinPage = false;
+  }
+
   public OCacheEntry addPage(long fileId) throws IOException {
     fileId = checkFileIdCompatibilty(fileId, storageId);
 
@@ -395,6 +405,9 @@ public class OAtomicOperation {
         else if (fileChanges.truncate)
           readCache.truncateFile(fileId, writeCache);
 
+        if (fileChanges.unpinAllPages)
+          readCache.unpinAllPages(fileId);
+
         for (Map.Entry<Long, OCacheEntryChanges> filePageChangesEntry : fileChanges.pageChangesMap.entrySet()) {
           final OCacheEntryChanges filePageChanges = filePageChangesEntry.getValue();
           if (!filePageChanges.changes.hasChanges())
@@ -506,6 +519,7 @@ public class OAtomicOperation {
     private boolean                    isNew           = false;
     private boolean                    truncate        = false;
     private String                     fileName        = null;
+    private boolean                    unpinAllPages   = false;
   }
 
   private int storageId(long fileId) {
@@ -589,6 +603,9 @@ public class OAtomicOperation {
             readCache.addFile(fileChanges.fileName, newFileNamesId.get(fileChanges.fileName), writeCache);
           else if (fileChanges.truncate)
             readCache.truncateFile(fileId, writeCache);
+
+          if (fileChanges.unpinAllPages)
+            readCache.unpinAllPages(fileId);
 
           for (Map.Entry<Long, OCacheEntryChanges> filePageChangesEntry : fileChanges.pageChangesMap.entrySet()) {
             final OCacheEntryChanges filePageChanges = filePageChangesEntry.getValue();

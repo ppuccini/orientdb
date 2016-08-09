@@ -248,6 +248,56 @@ public class O2QCache implements OReadCache {
     removeColdestPagesIfNeeded();
   }
 
+  @Override
+  public void unpinAllPages(long fileId) {
+    int unpinned = 0;
+
+    cacheLock.acquireReadLock();
+    try {
+      final Lock fileLock = fileLockManager.acquireSharedLock(fileId);
+      try {
+        final Set<Long> pages = filePages.get(fileId);
+        final PageKey[] pageKeys = new PageKey[pages.size()];
+        int i = 0;
+        for (Long page : pages)
+          pageKeys[i++] = new PageKey(fileId, page);
+        final Lock[] pageLocks = pageLockManager.acquireExclusiveLocksInBatch(pageKeys);
+        try {
+
+          for (Long page : pages) {
+            final PinnedPage pinnedPage = new PinnedPage(fileId, page);
+            final OCacheEntry cacheEntry = pinnedPages.remove(pinnedPage);
+            if (cacheEntry == null)
+              continue;
+
+            a1in.putToMRU(cacheEntry);
+            ++unpinned;
+          }
+
+        } finally {
+          for (Lock pageLock : pageLocks)
+            pageLock.unlock();
+        }
+      } finally {
+        fileLockManager.releaseLock(fileLock);
+      }
+    } finally {
+      cacheLock.releaseReadLock();
+    }
+
+    if (unpinned == 0)
+      return;
+
+    MemoryData memoryData = memoryDataContainer.get();
+    MemoryData newMemoryData = new MemoryData(memoryData.maxSize, memoryData.pinnedPages - unpinned);
+    while (!memoryDataContainer.compareAndSet(memoryData, newMemoryData)) {
+      memoryData = memoryDataContainer.get();
+      newMemoryData = new MemoryData(memoryData.maxSize, memoryData.pinnedPages - unpinned);
+    }
+
+    removeColdestPagesIfNeeded();
+  }
+
   /**
    * Changes amount of memory which may be used by given cache. This method may consume many resources if amount of memory provided
    * in parameter is much less than current amount of memory.

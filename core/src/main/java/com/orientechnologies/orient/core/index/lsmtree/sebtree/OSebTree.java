@@ -44,12 +44,18 @@ import java.util.List;
  */
 public class OSebTree<K, V> extends ODurableComponent implements OTree<K, V> {
 
+  // TODO: add locks to create/open/delete/... operations
+
   /* internal */ static final int ENCODERS_VERSION             = 0;
   /* internal */ static final int BLOCK_SIZE                   = 16 /* pages, must be even */;
   /* internal */ static final int INLINE_KEYS_SIZE_THRESHOLD   = 16 /* bytes */;
   /* internal */ static final int INLINE_VALUES_SIZE_THRESHOLD = 10 /* bytes */;
 
-  private static final int BLOCK_HALF = BLOCK_SIZE / 2;
+  private static final int BLOCK_HALF                = BLOCK_SIZE / 2;
+  private static final int IN_MEMORY_PAGES_THRESHOLD = 32 * 1024 * 1024 / OSebTreeNode.MAX_PAGE_SIZE_BYTES;
+
+  private boolean inMemory;
+  private boolean full = false;
 
   private OEncoder.Provider<K> keyProvider;
   private OEncoder.Provider<V> valueProvider;
@@ -64,8 +70,9 @@ public class OSebTree<K, V> extends ODurableComponent implements OTree<K, V> {
   private boolean opened           = false;
   private String  currentOperation = null;
 
-  public OSebTree(OAbstractPaginatedStorage storage, String name, String extension) {
+  public OSebTree(OAbstractPaginatedStorage storage, String name, String extension, boolean inMemory) {
     super(storage, name, extension, name + extension);
+    this.inMemory = inMemory;
   }
 
   public void create(OBinarySerializer<K> keySerializer, OType[] keyTypes, int keySize, boolean nullKeyAllowed,
@@ -172,7 +179,25 @@ public class OSebTree<K, V> extends ODurableComponent implements OTree<K, V> {
   }
 
   public void delete() {
-    // TODO
+    final OSessionStoragePerformanceStatistic statistic = start();
+    try {
+      final OAtomicOperation atomicOperation = startAtomicOperation("delete", false);
+      try {
+
+        if (opened)
+          deleteFile(atomicOperation, fileId);
+        else if (isFileExists(atomicOperation, getFullName())) {
+          final long fileId = openFile(atomicOperation, getFullName());
+          deleteFile(atomicOperation, fileId);
+        }
+
+        endSuccessfulAtomicOperation();
+      } catch (Exception e) {
+        throw endFailedAtomicOperation(e);
+      }
+    } finally {
+      end(statistic);
+    }
   }
 
   @Override
@@ -359,6 +384,8 @@ public class OSebTree<K, V> extends ODurableComponent implements OTree<K, V> {
 
   private OSebTreeNode<K, V> createNode(OAtomicOperation atomicOperation) throws IOException {
     final OCacheEntry page = addPage(atomicOperation, fileId);
+    //    if (inMemory)
+    //      pinPage(atomicOperation, page);
     return new OSebTreeNode<>(page, keyProvider, valueProvider);
   }
 
@@ -702,7 +729,7 @@ public class OSebTree<K, V> extends ODurableComponent implements OTree<K, V> {
     //      final int preload = (int) (BLOCK_SIZE - (pageIndex - 1 - (nullKeyAllowed ? 1 : 0)) % BLOCK_SIZE);
     //      page = loadPage(atomicOperation, fileId, pageIndex, false, preload);
     //    } else
-    page = loadPage(atomicOperation, fileId, pageIndex, false);
+    page = loadPage(atomicOperation, fileId, pageIndex, false /*inMemory*/);
 
     return new OSebTreeNode<>(page, keyProvider, valueProvider);
   }
@@ -1407,8 +1434,18 @@ public class OSebTree<K, V> extends ODurableComponent implements OTree<K, V> {
     }
   }
 
+  public boolean isFull() {
+    return full;
+  }
+
   private long allocateBlock(OAtomicOperation atomicOperation) throws IOException {
     final long firstPage = createNode(atomicOperation).beginCreate().createDummy().endWrite().getPointer();
+
+    if (!full && firstPage >= IN_MEMORY_PAGES_THRESHOLD) {
+      full = true;
+      //      inMemory = false;
+      //      unpinAllPages(atomicOperation, fileId);
+    }
 
     for (int i = 0; i < BLOCK_SIZE - 1; ++i)
       createNode(atomicOperation).beginCreate().createDummy().endWrite();

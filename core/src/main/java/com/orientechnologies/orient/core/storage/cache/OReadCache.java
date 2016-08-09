@@ -68,6 +68,8 @@ public interface OReadCache {
 
   void pinPage(OCacheEntry cacheEntry) throws IOException;
 
+  void unpinAllPages(long fileId);
+
   OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache) throws IOException;
 
   void release(OCacheEntry cacheEntry, OWriteCache writeCache);
