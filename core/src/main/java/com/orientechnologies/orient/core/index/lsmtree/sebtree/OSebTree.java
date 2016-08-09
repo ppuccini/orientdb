@@ -52,7 +52,7 @@ public class OSebTree<K, V> extends ODurableComponent implements OTree<K, V> {
   /* internal */ static final int INLINE_VALUES_SIZE_THRESHOLD = 10 /* bytes */;
 
   private static final int BLOCK_HALF                = BLOCK_SIZE / 2;
-  private static final int IN_MEMORY_PAGES_THRESHOLD = 32 * 1024 * 1024 / OSebTreeNode.MAX_PAGE_SIZE_BYTES;
+  private static final int IN_MEMORY_PAGES_THRESHOLD = 64 * 1024 * 1024 / OSebTreeNode.MAX_PAGE_SIZE_BYTES;
 
   private boolean inMemory;
   private boolean full = false;
