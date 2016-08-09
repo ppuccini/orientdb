@@ -327,6 +327,16 @@ public class OSebTree<K, V> extends ODurableComponent implements OTree<K, V> {
     }
   }
 
+  /* internal */ void dump() throws IOException {
+    final OSebTreeNode<K, V> root = getRootNode(null).beginRead();
+    try {
+      System.out.println("Size: " + root.getTreeSize());
+      dump(root, 0);
+    } finally {
+      releaseNode(null, root.endRead());
+    }
+  }
+
   private OEncoder.Provider<K> selectKeyProvider(OBinarySerializer<K> keySerializer, OType[] keyTypes) {
     return OEncoder.runtime().getProviderForKeySerializer(keySerializer, keyTypes, OEncoder.Size.PreferFixed);
   }
@@ -687,12 +697,12 @@ public class OSebTree<K, V> extends ODurableComponent implements OTree<K, V> {
   private OSebTreeNode<K, V> getNode(OAtomicOperation atomicOperation, long pageIndex) throws IOException {
     final OCacheEntry page;
 
-//    if (!nullKeyAllowed && pageIndex > 0 || nullKeyAllowed && pageIndex > 1) {
-//      // preload to the block end
-//      final int preload = (int) (BLOCK_SIZE - (pageIndex - 1 - (nullKeyAllowed ? 1 : 0)) % BLOCK_SIZE);
-//      page = loadPage(atomicOperation, fileId, pageIndex, false, preload);
-//    } else
-      page = loadPage(atomicOperation, fileId, pageIndex, false);
+    //    if (!nullKeyAllowed && pageIndex > 0 || nullKeyAllowed && pageIndex > 1) {
+    //      // preload to the block end
+    //      final int preload = (int) (BLOCK_SIZE - (pageIndex - 1 - (nullKeyAllowed ? 1 : 0)) % BLOCK_SIZE);
+    //      page = loadPage(atomicOperation, fileId, pageIndex, false, preload);
+    //    } else
+    page = loadPage(atomicOperation, fileId, pageIndex, false);
 
     return new OSebTreeNode<>(page, keyProvider, valueProvider);
   }
@@ -1404,16 +1414,6 @@ public class OSebTree<K, V> extends ODurableComponent implements OTree<K, V> {
       createNode(atomicOperation).beginCreate().createDummy().endWrite();
 
     return firstPage;
-  }
-
-  public void dump() throws IOException {
-    final OSebTreeNode<K, V> root = getRootNode(null).beginRead();
-    try {
-      System.out.println("Size: " + root.getTreeSize());
-      dump(root, 0);
-    } finally {
-      releaseNode(null, root.endRead());
-    }
   }
 
   private void dump(OSebTreeNode<K, V> node, int level) throws IOException {

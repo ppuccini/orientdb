@@ -800,7 +800,6 @@ public class OSebTreeNode<K, V> extends OEncoderDurablePage {
 
     final int[] keySizes = new int[remaining];
     final K[] keys = (K[]) new Object[remaining];
-    final V[] values = (V[]) new Object[remaining];
     final long[] pointers = new long[remaining];
     final long[] markerPointers = new long[remaining];
     final int[] markersUsages = new int[remaining];
@@ -890,7 +889,7 @@ public class OSebTreeNode<K, V> extends OEncoderDurablePage {
   }
 
   @SuppressWarnings("unchecked")
-  public void dump(int level) {
+  /* internal */ void dump(int level) {
     for (int i = 0; i < level; ++i)
       System.out.print('\t');
     System.out.print(isLeaf() ? "Leaf " : "Int. ");

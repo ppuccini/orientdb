@@ -31,6 +31,8 @@ import java.nio.charset.Charset;
  */
 public class OStringEncoder_V0 implements OStringEncoder {
 
+  private static final Charset UTF8_CHARSET = Charset.forName("UTF-8");
+
   private final OIntegerEncoder lengthEncoder;
 
   public OStringEncoder_V0(OEncoder.Runtime runtime) {
@@ -55,7 +57,7 @@ public class OStringEncoder_V0 implements OStringEncoder {
   @Override
   public int exactSize(String value) {
     // TODO: optimize
-    final byte[] utf8Bytes = value.getBytes(Charset.forName("UTF-8"));
+    final byte[] utf8Bytes = value.getBytes(UTF8_CHARSET);
     return lengthEncoder.exactSizeInteger(utf8Bytes.length) + utf8Bytes.length;
   }
 
@@ -77,6 +79,6 @@ public class OStringEncoder_V0 implements OStringEncoder {
   @Override
   public String decode(OEncoder.Stream stream) {
     final int length = lengthEncoder.decodeInteger(stream);
-    return new String(stream.read(length), Charset.forName("UTF-8"));
+    return new String(stream.read(length), UTF8_CHARSET);
   }
 }

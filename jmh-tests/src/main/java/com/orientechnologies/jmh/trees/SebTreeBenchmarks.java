@@ -34,7 +34,7 @@ public class SebTreeBenchmarks {
   private OSebTree<String, String> tree;
   private Random                   random;
 
-  private String key;
+  private long keyIndex;
 
   @Setup
   public void setup() {
@@ -54,7 +54,7 @@ public class SebTreeBenchmarks {
     tree.create(OStringSerializer.INSTANCE, null, 1, false, OStringSerializer.INSTANCE);
 
     random = new Random(57);
-    key = randomString(8);
+    keyIndex = 0;
   }
 
   @TearDown
@@ -82,30 +82,26 @@ public class SebTreeBenchmarks {
   @Benchmark
   @BenchmarkMode(Mode.Throughput)
   public void sequentialInsert() {
-    tree.put(nextString(key), randomString(128));
+    tree.put(nextString(keyIndex++), randomString(128));
   }
 
   private String randomString(int maxLength) {
     final int length = random.nextInt(maxLength);
     final StringBuilder builder = new StringBuilder(length);
     for (int i = 0; i < length; ++i)
-      builder.append((char) random.nextInt('z' - 'a'));
+      builder.append((char) ('a' + random.nextInt('z' - 'a')));
     return builder.toString();
   }
 
-  private String nextString(String string) {
-    if (string.isEmpty())
-      return "a";
+  private String nextString(long keyIndex) {
+    final StringBuilder builder = new StringBuilder();
 
-    final StringBuilder builder = new StringBuilder(string);
-    for (int i = builder.length() - 1; i >= 0; --i) {
-      if (builder.charAt(i) != 'z') {
-        builder.setCharAt(i, (char) (builder.charAt(i) + 1));
-        return builder.toString();
-      }
-    }
+    do {
+      builder.append((char) ('a' + keyIndex % ('z' - 'a')));
+      keyIndex /= 'z' - 'a';
+    } while (keyIndex > 0);
 
-    return string + 'a';
+    return builder.reverse().toString();
   }
 
 }

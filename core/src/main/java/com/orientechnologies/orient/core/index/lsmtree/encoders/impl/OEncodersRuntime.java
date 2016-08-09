@@ -66,7 +66,7 @@ public class OEncodersRuntime implements OEncoder.Runtime {
     registerMapping(0, null,                       OUnsignedIntegerEncoder.class,  OFixedIntegerEncoder_V0.class);
     registerMapping(0, null,                       OUnsignedIntegerEncoder.class,  OVariableUnsignedIntegerEncoder_V0.class);
     registerMapping(0, OLongSerializer.class,      OLongEncoder.class,             OFixedLongEncoder_V0.class);
-//    registerMapping(0, OStringSerializer.class,    OStringEncoder.class,           OStringEncoder_V0.class);
+    registerMapping(0, OStringSerializer.class,    OStringEncoder.class,           OStringEncoder_V0.class);
 
     registerMapping(0, null,                       OPageIndexEncoder.class,        OPageIndexEncoder_V0.class);
     registerMapping(0, null,                       OPagePositionEncoder.class,     OPagePositionEncoder_V0.class);
