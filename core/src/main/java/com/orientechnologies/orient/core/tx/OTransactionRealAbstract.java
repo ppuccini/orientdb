@@ -54,15 +54,15 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   protected           Map<ORID, ORecordOperation>                       allEntries            = new LinkedHashMap<ORID, ORecordOperation>();
   protected           Map<String, OTransactionIndexChanges>             indexEntries          = new LinkedHashMap<String, OTransactionIndexChanges>();
   protected           Map<ORID, List<OTransactionRecordIndexOperation>> recordIndexOperations = new HashMap<ORID, List<OTransactionRecordIndexOperation>>();
-  protected int                                               id;
-  protected int                                               newObjectCounter      = -2;
-  protected Map<String, Object>                               userData              = new HashMap<String, Object>();
+  protected int id;
+  protected int                 newObjectCounter = -2;
+  protected Map<String, Object> userData         = new HashMap<String, Object>();
 
   /**
    * This set is used to track which documents are changed during tx, if documents are changed but not saved all changes are made
    * during tx will be undone.
    */
-  protected final Set<ODocument>                              changedDocuments      = new HashSet<ODocument>();
+  protected final Set<ODocument> changedDocuments = new HashSet<ODocument>();
 
   /**
    * Represents information for each index operation for each record in DB.
@@ -286,16 +286,15 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 
   /**
    * Bufferizes index changes to be flushed at commit time.
-   * 
+   *
    * @return
    */
   public OTransactionIndexChanges getIndexChanges(final String iIndexName) {
     return indexEntries.get(iIndexName);
   }
 
-
   public void addIndexEntry(final OIndex<?> delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iOperation,
-      final Object key, final OIdentifiable iValue){
+      final Object key, final OIdentifiable iValue) {
     addIndexEntry(delegate, iIndexName, iOperation, key, iValue, false);
   }
 
@@ -336,6 +335,31 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
       // NO CHANGE, IGNORE IT
       return;
 
+    // XXX: Identity update may mutate the index keys, so we have to record the changes being updated before the identity is
+    // updated, otherwise we may be unable to retrieve them by a mutated key later.
+
+    final List<KeyChangesUpdateRecord> keyChangesUpdateRecords = new ArrayList<KeyChangesUpdateRecord>();
+    final List<OTransactionRecordIndexOperation> transactionIndexOperations = recordIndexOperations.get(oldRid);
+    if (transactionIndexOperations != null) {
+      for (final OTransactionRecordIndexOperation indexOperation : transactionIndexOperations) {
+        OTransactionIndexChanges indexEntryChanges = indexEntries.get(indexOperation.index);
+        if (indexEntryChanges == null)
+          continue;
+
+        final OTransactionIndexChangesPerKey keyChanges = indexEntryChanges.changesPerKey.get(indexOperation.key);
+        if (keyChanges != null)
+          keyChangesUpdateRecords.add(new KeyChangesUpdateRecord(keyChanges, indexEntryChanges));
+      }
+    }
+
+    // todo: just reinserting all the index keys for now, that should be reworked
+    final List<KeyChangesUpdateRecord> keyRecordsToReinsert = new ArrayList<KeyChangesUpdateRecord>();
+    for (OTransactionIndexChanges indexChanges : indexEntries.values()) {
+      for (final OTransactionIndexChangesPerKey keyChanges : indexChanges.changesPerKey.values())
+        keyRecordsToReinsert.add(new KeyChangesUpdateRecord(keyChanges, indexChanges));
+      indexChanges.changesPerKey.clear();
+    }
+
     final ORecordOperation rec = getRecordEntry(oldRid);
     if (rec != null) {
       updatedRids.put(newRid, oldRid.copy());
@@ -355,18 +379,12 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
       }
     }
 
-    // UPDATE INDEXES
-    final List<OTransactionRecordIndexOperation> transactionIndexOperations = recordIndexOperations.get(oldRid);
-    if (transactionIndexOperations != null) {
-      for (final OTransactionRecordIndexOperation indexOperation : transactionIndexOperations) {
-        OTransactionIndexChanges indexEntryChanges = indexEntries.get(indexOperation.index);
-        if (indexEntryChanges == null)
-          continue;
+    for (KeyChangesUpdateRecord record : keyRecordsToReinsert)
+      record.indexChanges.changesPerKey.put(record.keyChanges.key, record.keyChanges);
 
-        final OTransactionIndexChangesPerKey changesPerKey = indexEntryChanges.getChangesPerKey(indexOperation.key);
-        updateChangesIdentity(oldRid, newRid, changesPerKey);
-      }
-    }
+    // UPDATE INDEXES
+    for (KeyChangesUpdateRecord record : keyChangesUpdateRecords)
+      updateChangesIdentity(oldRid, newRid, record.keyChanges);
   }
 
   protected void checkTransaction() {
@@ -449,5 +467,15 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   @Override
   public Object getCustomData(String iName) {
     return userData.get(iName);
+  }
+
+  private static class KeyChangesUpdateRecord {
+    public final OTransactionIndexChangesPerKey keyChanges;
+    public final OTransactionIndexChanges       indexChanges;
+
+    public KeyChangesUpdateRecord(OTransactionIndexChangesPerKey keyChanges, OTransactionIndexChanges indexChanges) {
+      this.keyChanges = keyChanges;
+      this.indexChanges = indexChanges;
+    }
   }
 }

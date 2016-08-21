@@ -545,11 +545,10 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
   @Override
   public void lockKeysForUpdateNoTx(Object... key) {
-    final ODatabase database = getDatabase();
-    final boolean txIsActive = database.getTransaction().isActive();
+    if (key == null || key.length == 0)
+      return;
 
-    if (!txIsActive)
-      keyLockManager.acquireExclusiveLocksInBatch(key);
+    keyLockManager.acquireExclusiveLocksInBatch(key);
   }
 
   @Override
@@ -557,27 +556,16 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     if (keys == null || keys.isEmpty())
       return;
 
-    final ODatabase database = getDatabase();
-    final boolean txIsActive = database.getTransaction().isActive();
-
-    if (!txIsActive) {
-      keyLockManager.acquireExclusiveLocksInBatch(keys);
-    }
+    keyLockManager.acquireExclusiveLocksInBatch(keys);
   }
 
   @Override
   public void releaseKeysForUpdateNoTx(Object... key) {
-    if (key == null)
+    if (key == null || key.length == 0)
       return;
 
-    final ODatabase database = getDatabase();
-    final boolean txIsActive = database.getTransaction().isActive();
-
-    if (!txIsActive) {
-      for (Object k : key) {
-        keyLockManager.releaseExclusiveLock(k);
-      }
-    }
+    for (Object k : key)
+      keyLockManager.releaseExclusiveLock(k);
   }
 
   @Override
@@ -585,14 +573,8 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     if (keys == null || keys.isEmpty())
       return;
 
-    final ODatabase database = getDatabase();
-    final boolean txIsActive = database.getTransaction().isActive();
-
-    if (!txIsActive) {
-      for (Object k : keys) {
-        keyLockManager.releaseExclusiveLock(k);
-      }
-    }
+    for (Object k : keys)
+      keyLockManager.releaseExclusiveLock(k);
   }
 
   public OIndex<T> clear() {
@@ -748,6 +730,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
    * no point in throwing {@link com.orientechnologies.orient.core.storage.ORecordDuplicatedException} while applying index changes.
    *
    * @param changes the changes to interpret.
+   *
    * @return the interpreted index key changes.
    */
   protected Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(

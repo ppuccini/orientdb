@@ -214,8 +214,7 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
     }
   }
 
-  private boolean processCompositeIndexDelete(final OIndex<?> index, final Set<String> dirtyFields,
-      final ODocument iRecord) {
+  private boolean processCompositeIndexDelete(final OIndex<?> index, final Set<String> dirtyFields, final ODocument iRecord) {
     final OCompositeIndexDefinition indexDefinition = (OCompositeIndexDefinition) index.getDefinition();
 
     final String multiValueField = indexDefinition.getMultiValueField();
@@ -296,6 +295,8 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
   }
 
   private ODocument checkIndexedPropertiesOnCreation(final ODocument record, final Collection<OIndex<?>> indexes) {
+    final boolean noTx = !record.getDatabase().getTransaction().isActive();
+
     ODocument replaced = null;
 
     Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys;
@@ -311,12 +312,14 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
       }
     }
 
-    for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeysMap.entrySet()) {
-      final OIndexInternal<?> index = entry.getKey().getInternal();
-      index.lockKeysForUpdateNoTx(entry.getValue());
-    }
+    if (noTx) {
+      for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeysMap.entrySet()) {
+        final OIndexInternal<?> index = entry.getKey().getInternal();
+        index.lockKeysForUpdateNoTx(entry.getValue());
+      }
 
-    indexKeysMapQueue.push(indexKeysMap);
+      indexKeysMapQueue.push(indexKeysMap);
+    }
 
     for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeysMap.entrySet()) {
       final OIndex<?> index = entry.getKey();
@@ -336,6 +339,8 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
   }
 
   private void checkIndexedPropertiesOnUpdate(final ODocument record, final Collection<OIndex<?>> indexes) {
+    final boolean noTx = !record.getDatabase().getTransaction().isActive();
+
     Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys;
 
     final TreeMap<OIndex<?>, List<Object>> indexKeysMap = new TreeMap<OIndex<?>, List<Object>>();
@@ -354,12 +359,14 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
       }
     }
 
-    for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeysMap.entrySet()) {
-      final OIndexInternal<?> index = entry.getKey().getInternal();
-      index.lockKeysForUpdateNoTx(entry.getValue());
-    }
+    if (noTx) {
+      for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeysMap.entrySet()) {
+        final OIndexInternal<?> index = entry.getKey().getInternal();
+        index.lockKeysForUpdateNoTx(entry.getValue());
+      }
 
-    indexKeysMapQueue.push(indexKeysMap);
+      indexKeysMapQueue.push(indexKeysMap);
+    }
 
     for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeysMap.entrySet()) {
       final OIndex<?> index = entry.getKey();
@@ -465,6 +472,8 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
 
   @Override
   public RESULT onRecordBeforeDelete(final ODocument iDocument) {
+    final boolean noTx = !iDocument.getDatabase().getTransaction().isActive();
+
     final int version = iDocument.getVersion(); // Cache the transaction-provided value
     if (iDocument.fields() == 0 && iDocument.getIdentity().isPersistent()) {
       // FORCE LOADING OF CLASS+FIELDS TO USE IT AFTER ON onRecordAfterDelete METHOD
@@ -492,12 +501,14 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
         }
       }
 
-      for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeysMap.entrySet()) {
-        final OIndexInternal<?> index = entry.getKey().getInternal();
-        index.lockKeysForUpdateNoTx(entry.getValue());
-      }
+      if (noTx) {
+        for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeysMap.entrySet()) {
+          final OIndexInternal<?> index = entry.getKey().getInternal();
+          index.lockKeysForUpdateNoTx(entry.getValue());
+        }
 
-      indexKeysMapQueue.push(indexKeysMap);
+        indexKeysMapQueue.push(indexKeysMap);
+      }
     }
 
     return RESULT.RECORD_NOT_CHANGED;
@@ -604,17 +615,23 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
 
   @Override
   public void onRecordFinalizeUpdate(ODocument document) {
-    unlockKeys();
+    final boolean noTx = !document.getDatabase().getTransaction().isActive();
+    if (noTx)
+      unlockKeys();
   }
 
   @Override
   public void onRecordFinalizeCreation(ODocument document) {
-    unlockKeys();
+    final boolean noTx = !document.getDatabase().getTransaction().isActive();
+    if (noTx)
+      unlockKeys();
   }
 
   @Override
   public void onRecordFinalizeDeletion(ODocument document) {
-    unlockKeys();
+    final boolean noTx = !document.getDatabase().getTransaction().isActive();
+    if (noTx)
+      unlockKeys();
   }
 
   private void unlockKeys() {

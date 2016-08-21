@@ -1418,8 +1418,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           makeStorageDirty();
           startStorageTx(clientTx);
 
-          lockIndexKeys(indexManager, indexesToCommit);
-          lockIndexes(indexesToCommit);
+          // Identity update may change the index keys to lock. So we lock the clusters first, allocate cluster positions,
+          // update the identity and then lock the index keys and the indexes.
           lockClusters(clustersToLock);
 
           Map<ORecordOperation, OPhysicalPosition> positions = new IdentityHashMap<ORecordOperation, OPhysicalPosition>();
@@ -1455,6 +1455,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               clientTx.updateIdentityAfterCommit(oldRID, rid);
             }
           }
+
+          lockIndexKeys(indexManager, indexesToCommit);
+          lockIndexes(indexesToCommit);
 
           for (ORecordOperation txEntry : entries) {
             commitEntry(txEntry, positions.get(txEntry));
