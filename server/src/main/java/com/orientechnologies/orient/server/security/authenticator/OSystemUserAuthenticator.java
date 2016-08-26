@@ -19,7 +19,10 @@
  */
 package com.orientechnologies.orient.server.security.authenticator;
 
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.exception.OCoreException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
@@ -32,9 +35,8 @@ import com.orientechnologies.orient.server.security.OSecurityAuthenticatorAbstra
 
 /**
  * Provides a default password authenticator.
- * 
+ *
  * @author S. Colin Leister
- * 
  */
 public class OSystemUserAuthenticator extends OSecurityAuthenticatorAbstract {
 
@@ -66,13 +68,14 @@ public class OSystemUserAuthenticator extends OSecurityAuthenticatorAbstract {
     String principal = null;
 
     try {
-      if(getServer() != null) {	
-    	  // dbName parameter is null because we don't need to filter any roles for this.
-    	  OUser user = getServer().getSecurity().getSystemUser(username, null);
+      if (getServer() != null) {
+        // dbName parameter is null because we don't need to filter any roles for this.
+        OUser user = getServer().getSecurity().getSystemUser(username, null);
 
-    	  if(user != null && user.getAccountStatus() == OSecurityUser.STATUSES.ACTIVE) {
-          if (user.checkPassword(password)) principal = username;
-    	  }
+        if (user != null && user.getAccountStatus() == OSecurityUser.STATUSES.ACTIVE) {
+          if (user.checkPassword(password))
+            principal = username;
+        }
       }
     } catch (Exception ex) {
       OLogManager.instance().error(this, "authenticate() Exception: %s", ex.getMessage());
@@ -89,17 +92,17 @@ public class OSystemUserAuthenticator extends OSecurityAuthenticatorAbstract {
       return false;
 
     try {
-      if(getServer() != null) {
-    	  OUser user = getServer().getSecurity().getSystemUser(username, null);
-    	  
-    	  if(user != null && user.getAccountStatus() == OSecurityUser.STATUSES.ACTIVE) {
+      if (getServer() != null) {
+        OUser user = getServer().getSecurity().getSystemUser(username, null);
+
+        if (user != null && user.getAccountStatus() == OSecurityUser.STATUSES.ACTIVE) {
           ORole role = null;
 
           ORule.ResourceGeneric rg = ORule.mapLegacyResourceToGenericResource(resource);
 
-          if (rg != null) {        
+          if (rg != null) {
             String specificResource = ORule.mapLegacyResourceToSpecificResource(resource);
-            
+
             if (specificResource == null || specificResource.equals("*")) {
               specificResource = null;
             }
@@ -111,7 +114,8 @@ public class OSystemUserAuthenticator extends OSecurityAuthenticatorAbstract {
         }
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "isAuthorized() Exception: %s", ex.getMessage());
+      OLogManager.instance().error(this, "isAuthorized() Exception: %s", ex, ex.getMessage());
+      throw OException.wrapException(new OSystemException("isAuthorized() Exception"), ex);
     }
 
     return false;
@@ -122,12 +126,12 @@ public class OSystemUserAuthenticator extends OSecurityAuthenticatorAbstract {
     OServerUserConfiguration userCfg = null;
 
     try {
-      if(getServer() != null) {
-    	  OUser user = getServer().getSecurity().getSystemUser(username, null);
-    		
-    	  if(user != null && user.getAccountStatus() == OSecurityUser.STATUSES.ACTIVE) {
+      if (getServer() != null) {
+        OUser user = getServer().getSecurity().getSystemUser(username, null);
+
+        if (user != null && user.getAccountStatus() == OSecurityUser.STATUSES.ACTIVE) {
           userCfg = new OServerUserConfiguration(user.getName(), "", "");
-    	  }
+        }
       }
     } catch (Exception ex) {
       OLogManager.instance().error(this, "getUser() Exception: %s", ex.getMessage());
